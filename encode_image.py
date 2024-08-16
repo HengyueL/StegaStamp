@@ -1,4 +1,4 @@
-import bchlib
+# import bchlib
 import glob
 import os
 from PIL import Image,ImageOps
@@ -11,15 +11,7 @@ from tensorflow.python.saved_model import signature_constants
 BCH_POLYNOMIAL = 137
 BCH_BITS = 5
 
-def main():
-    import argparse
-    parser = argparse.ArgumentParser()
-    parser.add_argument('model', type=str)
-    parser.add_argument('--image', type=str, default=None)
-    parser.add_argument('--images_dir', type=str, default=None)
-    parser.add_argument('--save_dir', type=str, default=None)
-    parser.add_argument('--secret', type=str, default='Stega!!')
-    args = parser.parse_args()
+def encode(args, secret):
 
     if args.image is not None:
         files_list = [args.image]
@@ -46,19 +38,21 @@ def main():
     width = 400
     height = 400
 
-    bch = bchlib.BCH(BCH_POLYNOMIAL, BCH_BITS)
+    # bch = bchlib.BCH(BCH_POLYNOMIAL, BCH_BITS)
 
-    if len(args.secret) > 7:
-        print('Error: Can only encode 56bits (7 characters) with ECC')
-        return
+    # if len(args.secret) > 7:
+    #     print('Error: Can only encode 56bits (7 characters) with ECC')
+    #     return
 
-    data = bytearray(args.secret + ' '*(7-len(args.secret)), 'utf-8')
-    ecc = bch.encode(data)
-    packet = data + ecc
+    # data = bytearray(args.secret + ' '*(7-len(args.secret)), 'utf-8')
+    # ecc = bch.encode(data)
+    # packet = data + ecc
 
-    packet_binary = ''.join(format(x, '08b') for x in packet)
-    secret = [int(x) for x in packet_binary]
-    secret.extend([0,0,0,0])
+    # packet_binary = ''.join(format(x, '08b') for x in packet)
+    # secret = [int(x) for x in packet_binary]
+    # secret.extend([0,0,0,0])
+    
+    # secret = np.random.binomial(1, 0.5, 100)
 
     if args.save_dir is not None:
         if not os.path.exists(args.save_dir):
@@ -87,6 +81,17 @@ def main():
 
             im = Image.fromarray(np.squeeze(np.array(residual)))
             im.save(args.save_dir + '/'+save_name+'_residual.png')
+    
+    return secret
 
 if __name__ == "__main__":
-    main()
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('model', type=str)
+    parser.add_argument('--image', type=str, default=None)
+    parser.add_argument('--images_dir', type=str, default=None)
+    parser.add_argument('--save_dir', type=str, default=None)
+    # parser.add_argument('--secret', type=str, default='Stega!!')
+    args = parser.parse_args()
+    secret = np.random.binomial(1, 0.5, 100)
+    encode(args, secret)
