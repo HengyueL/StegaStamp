@@ -9,8 +9,6 @@ from tensorflow.python.saved_model import tag_constants
 from tensorflow.python.saved_model import signature_constants
 import pickle
 
-BCH_POLYNOMIAL = 137
-BCH_BITS = 5
 
 def encode(args, secret):
 
@@ -31,21 +29,6 @@ def encode(args, secret):
     width = 400
     height = 400
 
-    # bch = bchlib.BCH(BCH_POLYNOMIAL, BCH_BITS)
-
-    # if len(args.secret) > 7:
-    #     print('Error: Can only encode 56bits (7 characters) with ECC')
-    #     return
-
-    # data = bytearray(args.secret + ' '*(7-len(args.secret)), 'utf-8')
-    # ecc = bch.encode(data)
-    # packet = data + ecc
-
-    # packet_binary = ''.join(format(x, '08b') for x in packet)
-    # secret = [int(x) for x in packet_binary]
-    # secret.extend([0,0,0,0])
-    
-    # secret = np.random.binomial(1, 0.5, 100)
     img_root_dir = args.images_dir
     files_list = [f for f in os.listdir(img_root_dir) if ".png" in f]
 
@@ -53,7 +36,7 @@ def encode(args, secret):
         if not os.path.exists(args.save_dir):
             os.makedirs(args.save_dir)
         size = (width, height)
-        for file in files_list[:3]:
+        for file in files_list:
             filename = os.path.join(img_root_dir, file)
 
             image = Image.open(filename).convert("RGB")
