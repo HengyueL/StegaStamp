@@ -13,14 +13,6 @@ BCH_BITS = 5
 
 def encode(args, secret):
 
-    if args.image is not None:
-        files_list = [args.image]
-    elif args.images_dir is not None:
-        files_list = glob.glob(args.images_dir + '/*')
-    else:
-        print('Missing input image')
-        return
-
     sess = tf.InteractiveSession(graph=tf.Graph())
 
     model = tf.saved_model.loader.load(sess, [tag_constants.SERVING], args.model)
@@ -58,29 +50,30 @@ def encode(args, secret):
         if not os.path.exists(args.save_dir):
             os.makedirs(args.save_dir)
         size = (width, height)
-        for filename in files_list:
-            image = Image.open(filename).convert("RGB")
-            image = np.array(ImageOps.fit(image,size),dtype=np.float32)
-            image /= 255.
 
-            feed_dict = {input_secret:[secret],
-                         input_image:[image]}
+        filename = args.image
+        image = Image.open(filename).convert("RGB")
+        image = np.array(ImageOps.fit(image,size),dtype=np.float32)
+        image /= 255.
 
-            hidden_img, residual = sess.run([output_stegastamp, output_residual],feed_dict=feed_dict)
+        feed_dict = {input_secret:[secret],
+                        input_image:[image]}
 
-            rescaled = (hidden_img[0] * 255).astype(np.uint8)
-            raw_img = (image * 255).astype(np.uint8)
-            residual = residual[0]+.5
+        hidden_img, residual = sess.run([output_stegastamp, output_residual],feed_dict=feed_dict)
 
-            residual = (residual * 255).astype(np.uint8)
+        rescaled = (hidden_img[0] * 255).astype(np.uint8)
+        raw_img = (image * 255).astype(np.uint8)
+        residual = residual[0]+.5
 
-            save_name = filename.split('/')[-1].split('.')[0]
+        residual = (residual * 255).astype(np.uint8)
 
-            im = Image.fromarray(np.array(rescaled))
-            im.save(args.save_dir + '/'+save_name+'_hidden.png')
+        save_name = filename.split('/')[-1].split('.')[0]
 
-            im = Image.fromarray(np.squeeze(np.array(residual)))
-            im.save(args.save_dir + '/'+save_name+'_residual.png')
+        im = Image.fromarray(np.array(rescaled))
+        im.save(args.save_dir + '/'+save_name+'_hidden.png')
+
+        im = Image.fromarray(np.squeeze(np.array(residual)))
+        im.save(args.save_dir + '/'+save_name+'_residual.png')
     
     return secret
 
@@ -89,7 +82,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('model', type=str)
     parser.add_argument('--image', type=str, default=None)
-    parser.add_argument('--images_dir', type=str, default=None)
+    # parser.add_argument('--images_dir', type=str, default=None)
     parser.add_argument('--save_dir', type=str, default=None)
     # parser.add_argument('--secret', type=str, default='Stega!!')
     args = parser.parse_args()
