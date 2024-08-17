@@ -1,14 +1,10 @@
 import os
 import numpy as np
 import pandas as pd
-import glob
-import time
 import warnings
 import argparse
-from encode_image import encode
-from decode_image import decode
 warnings.filterwarnings('ignore')
-
+import pickle
 
 def watermark_np_to_str(watermark_np):
     """
@@ -42,6 +38,8 @@ def main(args):
         save_dir, "encoder_img"
     )
     os.makedirs(save_encoder_dir, exist_ok=True)
+    save_bitstring_dir = os.path.join(save_dir, "decode_string")
+    os.makedirs(save_bitstring_dir, exist_ok=True)
 
     res_dict = {
         'ImageName': [],
@@ -52,11 +50,10 @@ def main(args):
         save_dir, "water_mark.csv"
     )
     
-    secret_np = np.random.binomial(1, 0.5, 100)
+    secret_np = np.random.binomial(1, 0.5, 100) 
 
     for img_id, file_name in enumerate(files):
-        if img_id > 2:
-            break
+
         clean_img_path = os.path.join(
             clean_data_root, file_name
         )
@@ -65,7 +62,12 @@ def main(args):
         args.model = 'saved_models/stegastamp_pretrained'
         args.image = clean_img_path
         args.save_dir = save_encoder_dir
-        encode(args, secret_np)
+        # encode(args, secret_np)
+        cmd = "python encode_image.py --model {} --image {} --save_dir {}".format(
+            args.model, args.image, args.save_dir
+        )
+        os.system(cmd)
+
         watermark_str = watermark_np_to_str(secret_np)
         res_dict["ImageName"].append(file_name)
         res_dict["Encoder"].append([watermark_str])
@@ -76,8 +78,20 @@ def main(args):
         args.decode_img_dir = os.path.join(
             save_encoder_dir, saved_hidden_img_name
         )
+        save_bit_string_path = os.path.join(save_bitstring_dir, file_name)
+        save_bit_string_path = save_bit_string_path.replace(".png", ".pkl")
+        args.msg_save_dir = save_bit_string_path
         print("Decode: {}".format(args.decode_img_dir))
-        decoded_str = decode(args)
+        print("Save to {}".format(args.msg_save_dir))
+        # decoded_str = decode(args)
+        cmd = "python decode_image.py --model {} --decode_img_dir {} --msg_save_dir {}".format(
+            args.model, args.decode_img_dir, args.msg_save_dir
+        )
+        os.system(cmd)
+
+        with open(args.msg_save_dir, 'rb') as handle:
+            decoded_str = pickle.load(handle)
+
         res_dict["Decoder"].append([decoded_str])
 
 

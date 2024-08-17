@@ -8,10 +8,12 @@ import tensorflow.contrib.image
 from tensorflow.python.saved_model import tag_constants
 from tensorflow.python.saved_model import signature_constants
 
-BCH_POLYNOMIAL = 137
-BCH_BITS = 5
+def watermark_str_to_numpy(watermark_str):
+    result = [int(i) for i in watermark_str]
+    return np.asarray(result)
 
-def encode(args, secret):
+
+def encode(args):
 
     sess = tf.InteractiveSession(graph=tf.Graph())
 
@@ -42,9 +44,11 @@ def encode(args, secret):
 
     # packet_binary = ''.join(format(x, '08b') for x in packet)
     # secret = [int(x) for x in packet_binary]
-    # secret.extend([0,0,0,0])
+    # secret.extend([0,0,0,0])'
     
     # secret = np.random.binomial(1, 0.5, 100)
+    secret = args.secret
+    secret = watermark_str_to_numpy(secret)
 
     if args.save_dir is not None:
         if not os.path.exists(args.save_dir):
@@ -72,19 +76,17 @@ def encode(args, secret):
         im = Image.fromarray(np.array(rescaled))
         im.save(args.save_dir + '/'+save_name+'_hidden.png')
 
-        im = Image.fromarray(np.squeeze(np.array(residual)))
-        im.save(args.save_dir + '/'+save_name+'_residual.png')
-    
-    return secret
+        # im = Image.fromarray(np.squeeze(np.array(residual)))
+        # im.save(args.save_dir + '/residual/'+save_name+'_residual.png')
+
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('model', type=str)
+    parser.add_argument('--model', type=str)
     parser.add_argument('--image', type=str, default=None)
     # parser.add_argument('--images_dir', type=str, default=None)
     parser.add_argument('--save_dir', type=str, default=None)
-    # parser.add_argument('--secret', type=str, default='Stega!!')
+    parser.add_argument('--secret', type=str, default='1'*100)
     args = parser.parse_args()
-    secret = np.random.binomial(1, 0.5, 100)
-    encode(args, secret)
+    encode(args)

@@ -4,9 +4,10 @@ import tensorflow as tf
 import tensorflow.contrib.image
 from tensorflow.python.saved_model import tag_constants
 from tensorflow.python.saved_model import signature_constants
+import argparse
+import os
+import pickle
 
-BCH_POLYNOMIAL = 137
-BCH_BITS = 5
 
 def decode(args):
 
@@ -29,16 +30,18 @@ def decode(args):
     secret = sess.run([output_secret],feed_dict=feed_dict)[0][0]
 
     packet_binary = "".join([str(int(bit)) for bit in secret])
-    return packet_binary
+    print("save {}".format(packet_binary))
+    with open(args.msg_save_dir, 'wb') as handle:
+        pickle.dump(packet_binary, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == "__main__":
-    import argparse
+    
     parser = argparse.ArgumentParser()
-    parser.add_argument('model', type=str)
+    parser.add_argument('--model', type=str)
     parser.add_argument('--decode_img_dir', type=str, default=None)
     parser.add_argument('--secret_size', type=int, default=100)
+    parser.add_argument("--msg_save_dir", type=str, default="")
     args = parser.parse_args()
-
     decode(args)
 
