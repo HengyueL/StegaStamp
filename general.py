@@ -1,8 +1,20 @@
 from PIL import Image
-import cv2
+import torch, cv2
 import random
 import math
 import numpy as np
+from pytorch_msssim import ssim, ms_ssim
+# from torchvision import transforms
+
+
+def set_random_seeds(seed):
+    """
+        This function sets all random seed used in this experiment.
+        For reproduce purpose.
+    """
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
 
 
 def uint8_to_float(img_orig):
@@ -21,6 +33,23 @@ def float_to_int(img_float):
 
 def float_to_uint8(img_float):
     return (img_float * 255).round().astype(np.uint8)
+
+
+def img_np_to_tensor(img_np):
+    """
+        Convert numpy image (float with range [0, 1], shape (N, N, 3)) into tensor input with shape (1, 3, N, N)
+    """
+    img_np = np.transpose(img_np, [2, 0, 1])
+    img_np = img_np[np.newaxis, :, :, :]
+    img_tensor = torch.from_numpy(img_np)
+    return img_tensor
+
+
+def tensor_output_to_image_np(out_tensor):
+    """
+        Convert a tensor output with shape (1, 3, N, N) into float image with shape (3, N, N) and range [0, 1]
+    """
+    return np.transpose(torch.clamp(out_tensor.detach().cpu(), 0, 1).numpy()[0, :, :, :], [1, 2, 0])
 
 
 def watermark_np_to_str(watermark_np):
@@ -68,6 +97,26 @@ def save_image_rgb(img_np, path):
     save_image_bgr(img_np, path)
 
 
+
+# ==== Adapted from: https://github.com/XuandongZhao/WatermarkAttacker/tree/main ===
+def compute_psnr_tensor(a, b):
+    """
+        Compute the psnr of two tensors with value range [0, 1]
+    """
+    mse = torch.mean((a - b) ** 2).item()
+    if mse == 0:
+        return 100
+    return -10 * math.log10(mse)
+
+
+def compute_msssim_tensor(a, b):
+    return ms_ssim(a, b, data_range=1.).item()
+
+
+def compute_ssim_tensor(a, b):
+    return ssim(a, b, data_range=1.).item()
+
+
 def bytearray_to_bits(x):
     """Convert bytearray to a list of bits"""
     result = []
@@ -77,3 +126,13 @@ def bytearray_to_bits(x):
         result.extend([int(b) for b in bits])
     return result
 
+
+def compute_ssim(a, b, data_range):
+    """
+        Compute the ssim score from 2 cv2 image in np.array.
+    """
+    a = np.transpose(a, [2, 0, 1])
+    a = torch.from_numpy(a).to(dtype=torch.float).unsqueeze(0)
+    b = np.transpose(b, [2, 0, 1])
+    b = torch.from_numpy(b).to(dtype=torch.float).unsqueeze(0)
+    return ssim(a, b, data_range=data_range).item()
