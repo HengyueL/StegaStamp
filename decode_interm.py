@@ -85,8 +85,8 @@ def main(args):
             # Readin the 
             im_orig_path = os.path.join(im_orig_root_dir, im_orig_name)
             im_orig_bgr_uint8 = cv2.imread(im_orig_path)
-            # if args.watermarker == "StegaStamp" and args.arch in ["cheng2020-anchor", "mbt2018"]:
-            #     im_orig_bgr_uint8 = cv2.resize(im_orig_bgr_uint8, (400, 400), interpolation=cv2.INTER_LINEAR)
+            if args.watermarker == "StegaStamp" and args.arch in ["cheng2020-anchor", "mbt2018"]:
+                im_orig_bgr_uint8 = cv2.resize(im_orig_bgr_uint8, (400, 400), interpolation=cv2.INTER_LINEAR)
             
             # Get the reconstructed data from the interm. result
             if args.evade_method == "WevadeBQ":
@@ -120,8 +120,8 @@ def main(args):
             ssim_w_log = []
             for img_idx in range(n_recon):
                 img_bgr_uint8 = img_recon_list[img_idx]    # shape [512, 512, 3]
-                # if args.watermarker == "StegaStamp" and args.arch in ["cheng2020-anchor", "mbt2018"]:
-                #     img_bgr_uint8 = cv2.resize(img_bgr_uint8, (400, 400), interpolation=cv2.INTER_LINEAR)
+                if args.watermarker == "StegaStamp" and args.arch in ["cheng2020-anchor", "mbt2018"]:
+                    img_bgr_uint8 = cv2.resize(img_bgr_uint8, (400, 400), interpolation=cv2.INTER_LINEAR)
 
                 # =================== YOUR CODE HERE =========================== #
                 
